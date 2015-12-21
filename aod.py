@@ -43,16 +43,33 @@ clfg = longBackgroundInterval   # counter for longbackgroundInterval
 csfg = shortBackgroundINterval  # counter for shortBackgroundInteral
 
 while(1):
-    # read the next frame
     ret, frame = cap.read()
-    # get foreground mask
-    fgmask = fgbg.apply(frame)
-    # apply morpholoygy on the foreground mask to get a better result
-    fgmask_ = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernal)
-    # extract the background
-    bg = fgbg.getBackgroundImage(frame)
-    # show the current background
-    cv2.imshow("background", bg)
+    cv2.imshow("frame", frame)
+
+    if clfg == longBackgroundInterval:
+        frameL = np.copy(frame)
+        fgbgl.apply(frameL)
+        BL = fgbgl.getBackgroundImage(frameL)
+        clfg = 0
+    else:
+        clfg += 1
+
+    if csfg == shortBackgroundINterval:
+        frameS = np.copy(frame)
+        fgbgs.apply(frameS)
+        BS = fgbgs.getBackgroundImage(frameS)
+        csfg = 0
+    else:
+        csfg += 1
+
+    # update short&long foregrounds
+    FL = getForegroundMask(frame, BL, 70)
+    FS = getForegroundMask(frame, BS, 70)
+
+    # detec static pixels and apply morphology on it
+    static = FL&cv2.bitwise_not(FS)
+    static = cv2.morphologyEx(static, cv2.MORPH_CLOSE, kernal)
+    cv2.imshow("static", static)
 
     # check if Esc is presed exit the video
     k = cv2.waitKey(30) & 0xff
