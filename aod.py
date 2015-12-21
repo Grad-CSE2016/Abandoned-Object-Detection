@@ -16,17 +16,31 @@ def getForegroundMask(frame, background, th):
     fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, kernel)
     return fgmask
 
+def MOG2init(history, T, nMixtures):
+    # create an instance of MoG and setting up its history length
+    fgbg = cv2.createBackgroundSubtractorMOG2(history)
+    # setting up the protion of the background model
+    fgbg.setBackgroundRatio(T)
+    # setting up the number of MoG
+    fgbg.setNMixtures(nMixtures)
+    return fgbg
+
 cap = cv2.VideoCapture('1.mp4')
 
 # setting up a kernal for morphology
 kernal = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3))
 
-# create a MoG background subtractor with 300 as a length of the history
-fgbg = cv2.createBackgroundSubtractorMOG2(300)
-# setting up the protion of the background model
-fgbg.setBackgroundRatio(0.4)
-# setting up the number of MoG
-fgbg.setNMixtures(3)
+# MoG for long background model
+fgbgl = MOG2init(300, 0.4, 3)
+# MoG for short background model
+fgbgs = MOG2init(300, 0.4, 3)
+
+
+longBackgroundInterval = 10
+shortBackgroundINterval = 1
+
+clfg = longBackgroundInterval   # counter for longbackgroundInterval
+csfg = shortBackgroundINterval  # counter for shortBackgroundInteral
 
 while(1):
     # read the next frame
