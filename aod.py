@@ -3,7 +3,7 @@ import cv2
 
 def getForegroundMask(frame, background, th):
     # reduce the nois in the farme
-    frame = cv2.blur(frame, (5,5))
+    frame =  cv2.blur(frame, (5,5))
     # get the absolute difference between the foreground and the background
     fgmask= cv2.absdiff(frame, background)
     # convert foreground mask to gray
@@ -35,12 +35,16 @@ fgbgl = MOG2init(300, 0.4, 3)
 # MoG for short background model
 fgbgs = MOG2init(300, 0.4, 3)
 
-
 longBackgroundInterval = 10
 shortBackgroundINterval = 1
 
 clfg = longBackgroundInterval   # counter for longbackgroundInterval
 csfg = shortBackgroundINterval  # counter for shortBackgroundInteral
+
+# static obj likelihood
+L = np.zeros(np.shape(cap.read()[1])[0:2])
+static_obj = np.zeros(np.shape(cap.read()[1])[0:2])
+k, maxe, thh = 600, 1000, 800
 
 while(1):
     ret, frame = cap.read()
@@ -69,10 +73,23 @@ while(1):
     # detec static pixels and apply morphology on it
     static = FL&cv2.bitwise_not(FS)
     static = cv2.morphologyEx(static, cv2.MORPH_CLOSE, kernal)
-    cv2.imshow("static", static)
+    # dectec non static objectes and apply morphology on it
+    not_static = FS|cv2.bitwise_not(FL)
+    not_static = cv2.morphologyEx(not_static, cv2.MORPH_CLOSE, kernal)
+
+    # update static obj likelihood
+    L = (static == 255) * (L+1) + ((static == 255)^1) * L
+    L = (not_static == 255) * (L-k) + ((not_static == 255)^1) * L
+    L[ L>maxe ] = maxe
+    L[ L<0 ] = 0
+
+    static_obj[L > thh] = 255
+    static_obj[L <= thh] = 0
+
+    cv2.imshow("static_obj", static_obj)
 
     # check if Esc is presed exit the video
-    k = cv2.waitKey(30) & 0xff
+    k = cv2.waitKey(1) & 0xff
     if k == 27:
         break
 
