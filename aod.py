@@ -35,7 +35,7 @@ fgbgl = MOG2init(300, 0.4, 3)
 # MoG for short background model
 fgbgs = MOG2init(300, 0.4, 3)
 
-longBackgroundInterval = 10
+longBackgroundInterval = 20
 shortBackgroundINterval = 1
 
 clfg = longBackgroundInterval   # counter for longbackgroundInterval
@@ -44,11 +44,10 @@ csfg = shortBackgroundINterval  # counter for shortBackgroundInteral
 # static obj likelihood
 L = np.zeros(np.shape(cap.read()[1])[0:2])
 static_obj = np.zeros(np.shape(cap.read()[1])[0:2])
-k, maxe, thh = 600, 1000, 800
+k, maxe, thh= 100, 1000, 700
 
 while(1):
     ret, frame = cap.read()
-    cv2.imshow("frame", frame)
 
     if clfg == longBackgroundInterval:
         frameL = np.copy(frame)
@@ -83,10 +82,12 @@ while(1):
     L[ L>maxe ] = maxe
     L[ L<0 ] = 0
 
-    static_obj[L > thh] = 255
-    static_obj[L <= thh] = 0
+    static_obj[L >= thh ] = 255
+    static_obj[L < thh ] = 0
 
-    cv2.imshow("static_obj", static_obj)
+    frame[L>=thh] = 0,0,255
+    #cv2.imshow("static_obj", static_obj)
+    cv2.imshow("frame", frame)
 
     # check if Esc is presed exit the video
     k = cv2.waitKey(1) & 0xff
