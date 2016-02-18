@@ -25,6 +25,47 @@ def MOG2init(history, T, nMixtures):
     fgbg.setNMixtures(nMixtures)
     return fgbg
 
+def extract_objs(image, step_size, window_size):
+    # a threshold for min static pixels needed to be found in the sliding window
+    th = (window_size**2) * 0.1
+    current_nonzero_elements = 0
+    # penalty is how meny times the expanding process didn't manage to find new
+    # static pixels, step is how much the expanding of the sliding will be and objs is a returned
+    # value containing the objects in the image
+    penalty, step, objs = 0, 5, []
+    # a while loop for sliding window in x&y
+    y = 0
+    while(y < image.shape[0]):
+        x = 0
+        while(x < image.shape[1]):
+            # counting the nonzero elements in the current window
+            current_nonzero_elements = np.count_nonzero(image[y:y+window_size, x:x+window_size])
+            if(current_nonzero_elements > th):
+                width =  window_size
+                height = window_size
+                # expand in x & y
+                penalty = 0
+                while(penalty < 1):
+                    dx = np.count_nonzero(image[y:y+height, x+width:x+width+step])
+                    dy = np.count_nonzero(image[y+height: y+height+step, x:x+width])
+                    if(dx == 0 and dy == 0):
+                        penalty += 1
+                        width += step
+                        height += step
+                    elif(dx >= dy):
+                        width += step
+                    else:
+                        height += step
+
+                objs.append([x, y, width, height])
+                y += height
+                break
+            x += step_size
+        y += step_size
+    if(len(objs)):
+        return objs
+    return
+
 cap = cv2.VideoCapture('1.mp4')
 
 # setting up a kernal for morphology
