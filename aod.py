@@ -94,8 +94,18 @@ csfg = shortBackgroundINterval  # counter for shortBackgroundInteral
 
 # static obj likelihood
 L = np.zeros(np.shape(cap.read()[1])[0:2])
-static_obj = np.zeros(np.shape(cap.read()[1])[0:2])
-k, maxe, thh= 100, 1000, 700
+
+static_obj_map = np.zeros(np.shape(cap.read()[1])[0:2])
+
+
+# static obj likelihood constants
+k, maxe, thh= 7, 2000, 800
+
+# obj-extraction constants
+slidewindowtime = 0
+minwindowsize = 70
+stepsize = 25
+static_objs = []
 
 while(1):
     ret, frame = cap.read()
@@ -133,8 +143,28 @@ while(1):
     L[ L>maxe ] = maxe
     L[ L<0 ] = 0
 
-    static_obj[L >= thh ] = 255
-    static_obj[L < thh ] = 0
+    # update static obj map
+    static_obj_map[L >= thh ] = 255
+    static_obj_map[L < thh ] = 0
+
+    # if number of nonzero elements in static obj map greater than min window size squared there
+    # could be a potential static obj, we will need to wait 200 frame to be pased if the condtion
+    # still true we will call "extract_objs" function and try to find these objects.
+    if(np.count_nonzero(clean_map(static_obj_map, static_objs)) > minwindowsize**2 ):
+        if(slidewindowtime > 200):
+            new_objs = extract_objs(clean_map(static_obj_map, static_objs), stepsize, minwindowsize)
+            # if we get new object, first we make sure that they are not dublicated ones and then
+            # put the unique static objects in "static_objs" variable
+            if(new_objs):
+                for i in range(0, len(new_objs)):
+                    if new_objs[i] not in static_objs:
+                        static_objs.append(new_objs[i])
+            slidewindowtime = 0
+            print(static_objs)
+        else:
+            slidewindowtime += 1
+    else:
+            slidewindowtime = 0 if slidewindowtime < 0 else slidewindowtime - 1
 
     frame[L>=thh] = 0,0,255
     #cv2.imshow("static_obj", static_obj)
