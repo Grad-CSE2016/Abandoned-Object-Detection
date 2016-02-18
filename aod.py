@@ -176,13 +176,11 @@ while(1):
                 continue
             cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
 
-    frame[L>=thh] = 0,0,255
-    #cv2.imshow("static_obj", static_obj)
     cv2.imshow("frame", frame)
 
     # check if Esc is presed exit the video
-    k = cv2.waitKey(1) & 0xff
-    if k == 27:
+    key = cv2.waitKey(1) & 0xff
+    if key == 27:
         break
 
 cap.release()
