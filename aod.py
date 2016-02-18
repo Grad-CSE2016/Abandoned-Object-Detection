@@ -66,6 +66,16 @@ def extract_objs(image, step_size, window_size):
         return objs
     return
 
+# this function returns static object map without pre-founded objects
+def clean_map(m, o):
+    rslt = np.copy(m)
+    for i in range (0, len(o)):
+        x, y= o[i][0], o[i][1]
+        w, h= o[i][2], o[i][3]
+        rslt[y:y+h, x:x+w] = 0
+    return rslt
+
+
 cap = cv2.VideoCapture('1.mp4')
 
 # setting up a kernal for morphology
