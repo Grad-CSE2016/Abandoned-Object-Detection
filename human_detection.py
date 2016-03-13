@@ -25,7 +25,7 @@ def is_human(image):
 
     return isPerson
 
-def detect_face(faceCascadePath,image,scaleFactor = 1.1 , minNeighbors = 5 , minSize = (30,30)):
+def detect_face(image,scaleFactor = 1.1 , minNeighbors = 5 , minSize = (30,30)):
     faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
     rects = faceCascade.detectMultiScale(image,scaleFactor = scaleFactor ,
     minNeighbors = minNeighbors , minSize = minSize , flags = cv2.CASCADE_SCALE_IMAGE)
