@@ -1,9 +1,6 @@
-from imutils.object_detection import non_max_suppression
-from imutils import paths
 import numpy as np
 import imutils
 import cv2
-import datetime
 
 def is_human(image):
     hog = cv2.HOGDescriptor()
