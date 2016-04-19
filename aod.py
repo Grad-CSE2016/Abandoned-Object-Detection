@@ -188,13 +188,16 @@ while(1):
     else:
             slidewindowtime = 0 if slidewindowtime < 0 else slidewindowtime - 1
     # draw recatngle around static obj/s
+    c=0
     for i in range (0, len(static_objs)):
-        if(static_objs[i]):
-            x, y = static_objs[i][0], static_objs[i][1]
-            w, h = static_objs[i][2], static_objs[i][3]
-            # check if the current static obj still in the scene
-            if(np.count_nonzero(static_obj_map[y:y+h, x:x+w]) < w * h * .25):
-                static_objs.remove(static_objs[i])
+        if(static_objs[i-c]):
+            x, y = static_objs[i-c][0], static_objs[i-c][1]
+            w, h = static_objs[i-c][2], static_objs[i-c][3]
+            # check if the current static obj still in the scene 
+            cv2.imshow("t", frame[y:y+h, x:x+w])
+            if((np.count_nonzero(static_obj_map[y:y+h, x:x+w]) < w * h * .25)):
+                static_objs.remove(static_objs[i-c])
+                c += 1
                 continue
             cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
 
