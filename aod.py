@@ -132,9 +132,10 @@ while(1):
     # update short&long foregrounds
     FL = getForegroundMask(frame, BL, 70)
     FS = getForegroundMask(frame, BS, 70)
+    FG = getForegroundMask(frame, BG, 70)
 
     # detec static pixels and apply morphology on it
-    static = FL&cv2.bitwise_not(FS)
+    static = FL&cv2.bitwise_not(FS)&FG
     static = cv2.morphologyEx(static, cv2.MORPH_CLOSE, kernal)
     # dectec non static objectes and apply morphology on it
     not_static = FS|cv2.bitwise_not(FL)
