@@ -10,6 +10,11 @@ def is_human(image):
     gray = cv2.cvtColor(orig, cv2.COLOR_BGR2GRAY)
     isPerson = False
 
+    if image.shape[1] < 64:
+        image.resize(image.shape[0],65)
+    if image.shape[0] < 128:
+        image.resize(130,image.shape[1])
+
     (rects, weights) = hog.detectMultiScale(image,winStride=(8,8), padding = (8,8) , scale = 1.03)
     if type(rects) is not tuple and rects.size > 0:
         isPerson = True
