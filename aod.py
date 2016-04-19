@@ -66,6 +66,23 @@ def extract_objs(image, step_size, window_size):
         return objs
     return
 
+def extract_objs2(im, min_w=15, min_h=15, max_w=500, max_h=500):
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(10,10))
+    arr = cv2.dilate(im, kernel, iterations=2)
+    arr = cv2.erode(arr, kernel, iterations=2)
+    arr = np.array(arr, dtype=np.uint8) 
+    _, th = cv2.threshold(arr,127,255,0)
+    im2, contours, hierarchy = cv2.findContours(th, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    objs = []
+    cv2.imwrite("tmp2.jpg", arr)
+    for c in contours:
+        x,y,w,h = cv2.boundingRect(c)
+        if (w >= min_w) & (w < max_w) & (h >= min_h ) & (h < max_h):
+            objs.append([x-5,y-5,w+5,h+5])
+        else:
+            print(w,h)
+    return objs
+
 # this function returns static object map without pre-founded objects
 def clean_map(m, o):
     rslt = np.copy(m)
@@ -109,6 +126,7 @@ slidewindowtime = 0
 minwindowsize = 70
 stepsize = 25
 static_objs = []
+th_sp = 20**2 # a th for number of static pixels
 
 while(1):
     ret, frame = cap.read()
@@ -154,9 +172,9 @@ while(1):
     # if number of nonzero elements in static obj map greater than min window size squared there
     # could be a potential static obj, we will need to wait 200 frame to be pased if the condtion
     # still true we will call "extract_objs" function and try to find these objects.
-    if(np.count_nonzero(clean_map(static_obj_map, static_objs)) > minwindowsize**2 ):
+    if(np.count_nonzero(clean_map(static_obj_map, static_objs)) > th_sp ):
         if(slidewindowtime > 200):
-            new_objs = extract_objs(clean_map(static_obj_map, static_objs), stepsize, minwindowsize)
+            new_objs = extract_objs2(clean_map(static_obj_map, static_objs))
             # if we get new object, first we make sure that they are not dublicated ones and then
             # put the unique static objects in "static_objs" variable
             if(new_objs):
