@@ -78,6 +78,9 @@ def clean_map(m, o):
 
 cap = cv2.VideoCapture('1.mp4')
 
+# background model
+BG = cv2.imread('bg.jpg')
+
 # setting up a kernal for morphology
 kernal = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3))
 
