@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from human_detection import is_human
 
 def getForegroundMask(frame, background, th):
     # reduce the nois in the farme
@@ -78,7 +79,8 @@ def extract_objs2(im, min_w=15, min_h=15, max_w=500, max_h=500):
     for c in contours:
         x,y,w,h = cv2.boundingRect(c)
         if (w >= min_w) & (w < max_w) & (h >= min_h ) & (h < max_h):
-            objs.append([x-5,y-5,w+5,h+5])
+            objs.append([x-5,y-5,w+5,h+5, 1]) # The last one means that it is still needed to check
+                                              # if it is a human or an obj
         else:
             print(w,h)
     return objs
@@ -193,12 +195,19 @@ while(1):
         if(static_objs[i-c]):
             x, y = static_objs[i-c][0], static_objs[i-c][1]
             w, h = static_objs[i-c][2], static_objs[i-c][3]
+            check_human_flag = static_objs[i-c][4]
             # check if the current static obj still in the scene 
             cv2.imshow("t", frame[y:y+h, x:x+w])
             if((np.count_nonzero(static_obj_map[y:y+h, x:x+w]) < w * h * .25)):
                 static_objs.remove(static_objs[i-c])
                 c += 1
                 continue
+            if(check_human_flag):
+                static_objs[i-c][4] = 0
+                if(is_human(frame[y:y+h, x:x+w])):
+                    static_objs.remove(static_objs[i-c])
+                    c += 1
+                    continue
             cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
 
     cv2.imshow("frame", frame)
