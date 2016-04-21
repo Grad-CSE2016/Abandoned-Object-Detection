@@ -41,6 +41,7 @@ def extract_objs(image, step_size, window_size):
         while(x < image.shape[1]):
             # counting the nonzero elements in the current window
             current_nonzero_elements = np.count_nonzero(image[y:y+window_size, x:x+window_size])
+            print(current_nonzero_elements, th)
             if(current_nonzero_elements > th):
                 width =  window_size
                 height = window_size
@@ -70,7 +71,6 @@ def extract_objs(image, step_size, window_size):
 def extract_objs2(im, min_w=15, min_h=15, max_w=500, max_h=500):
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(10,10))
     arr = cv2.dilate(im, kernel, iterations=2)
-    arr = cv2.erode(arr, kernel, iterations=2)
     arr = np.array(arr, dtype=np.uint8) 
     _, th = cv2.threshold(arr,127,255,0)
     im2, contours, hierarchy = cv2.findContours(th, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -79,8 +79,8 @@ def extract_objs2(im, min_w=15, min_h=15, max_w=500, max_h=500):
     for c in contours:
         x,y,w,h = cv2.boundingRect(c)
         if (w >= min_w) & (w < max_w) & (h >= min_h ) & (h < max_h):
-            objs.append([x-5,y-5,w+5,h+5, 1]) # The last one means that it is still needed to check
-                                              # if it is a human or an obj
+            objs.append([x,y,w,h, 1]) # The last one means that it is still needed to check
+                                      # if it is a human or an obj
         else:
             print(w,h)
     return objs
@@ -94,11 +94,13 @@ def clean_map(m, o):
         rslt[y:y+h, x:x+w] = 0
     return rslt
 
+print(is_human(cv2.imread("test_img.jpg")))
 
-cap = cv2.VideoCapture('1.mp4')
+#cap = cv2.VideoCapture('AVSS_AB_EVAL_divx.avi')
+cap = cv2.VideoCapture('3_pets.mp4')
 
 # background model
-BG = cv2.imread('bg.jpg')
+#BG = cv2.imread('bg.jpg')
 
 # setting up a kernal for morphology
 kernal = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3))
@@ -119,20 +121,19 @@ L = np.zeros(np.shape(cap.read()[1])[0:2])
 
 static_obj_map = np.zeros(np.shape(cap.read()[1])[0:2])
 
-
 # static obj likelihood constants
 k, maxe, thh= 7, 2000, 800
 
 # obj-extraction constants
 slidewindowtime = 0
 minwindowsize = 70
-stepsize = 25
+stepsize = 15
 static_objs = []
 th_sp = 20**2 # a th for number of static pixels
 
 while(1):
     ret, frame = cap.read()
-
+    f2 = frame.copy()
     if clfg == longBackgroundInterval:
         frameL = np.copy(frame)
         fgbgl.apply(frameL)
@@ -152,10 +153,10 @@ while(1):
     # update short&long foregrounds
     FL = getForegroundMask(frame, BL, 70)
     FS = getForegroundMask(frame, BS, 70)
-    FG = getForegroundMask(frame, BG, 70)
+    #FG = getForegroundMask(frame, BG, 70)
 
     # detec static pixels and apply morphology on it
-    static = FL&cv2.bitwise_not(FS)&FG
+    static = FL&cv2.bitwise_not(FS)#&FG
     static = cv2.morphologyEx(static, cv2.MORPH_CLOSE, kernal)
     # dectec non static objectes and apply morphology on it
     not_static = FS|cv2.bitwise_not(FL)
@@ -168,7 +169,7 @@ while(1):
     L[ L<0 ] = 0
 
     # update static obj map
-    static_obj_map[L >= thh ] = 255
+    static_obj_map[L >= thh ] = 254
     static_obj_map[L < thh ] = 0
 
     # if number of nonzero elements in static obj map greater than min window size squared there
@@ -184,7 +185,6 @@ while(1):
                     if new_objs[i] not in static_objs:
                         static_objs.append(new_objs[i])
             slidewindowtime = 0
-            print(static_objs)
         else:
             slidewindowtime += 1
     else:
@@ -198,24 +198,34 @@ while(1):
             check_human_flag = static_objs[i-c][4]
             # check if the current static obj still in the scene 
             cv2.imshow("t", frame[y:y+h, x:x+w])
+            cv2.imwrite("test_img.jpg", frame[y:y+h, x:x+w])
             if((np.count_nonzero(static_obj_map[y:y+h, x:x+w]) < w * h * .25)):
                 static_objs.remove(static_objs[i-c])
                 c += 1
                 continue
             if(check_human_flag):
-                static_objs[i-c][4] = 0
-                if(is_human(frame[y:y+h, x:x+w])):
-                    static_objs.remove(static_objs[i-c])
-                    c += 1
-                    continue
+                if(check_human_flag > 25): # check if the founded obj is a human ever 1 sec
+                    static_objs[i-c][4] = 0
+                    if(is_human(frame[y:y+h, x:x+w])):
+                        cv2.rectangle(frame, (x,y), (x+w,y+h), (255,0,0), 2)
+                        continue
+                else:
+                    static_objs[i-c][4] += 1
             cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
 
+    print(static_objs)
     cv2.imshow("frame", frame)
-
+    cv2.imshow("BG", BS)
+    #cv2.imshow("bgs", BS)
+    #cv2.imshow("bgl", BL)
+    #cv2.imshow("L", clean_map(static_obj_map, static_objs))
     # check if Esc is presed exit the video
     key = cv2.waitKey(1) & 0xff
     if key == 27:
+        cv2.imwrite("f1.jpg", frame)
+        cv2.imwrite("BG.jpg", BS)
         break
+
 
 cap.release()
 cv2.destoryAllWindows()
