@@ -97,10 +97,10 @@ def clean_map(m, o):
 print(is_human(cv2.imread("test_img.jpg")))
 
 #cap = cv2.VideoCapture('AVSS_AB_EVAL_divx.avi')
-cap = cv2.VideoCapture('3_pets.mp4')
+cap = cv2.VideoCapture('3.mp4')
 
 # background model
-#BG = cv2.imread('bg.jpg')
+BG = cv2.imread('bg.jpg')
 
 # setting up a kernal for morphology
 kernal = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3))
@@ -153,10 +153,10 @@ while(1):
     # update short&long foregrounds
     FL = getForegroundMask(frame, BL, 70)
     FS = getForegroundMask(frame, BS, 70)
-    #FG = getForegroundMask(frame, BG, 70)
+    FG = getForegroundMask(frame, BG, 70)
 
     # detec static pixels and apply morphology on it
-    static = FL&cv2.bitwise_not(FS)#&FG
+    static = FL&cv2.bitwise_not(FS)&FG
     static = cv2.morphologyEx(static, cv2.MORPH_CLOSE, kernal)
     # dectec non static objectes and apply morphology on it
     not_static = FS|cv2.bitwise_not(FL)
@@ -199,7 +199,7 @@ while(1):
             # check if the current static obj still in the scene 
             cv2.imshow("t", frame[y:y+h, x:x+w])
             cv2.imwrite("test_img.jpg", frame[y:y+h, x:x+w])
-            if((np.count_nonzero(static_obj_map[y:y+h, x:x+w]) < w * h * .25)):
+            if((np.count_nonzero(static_obj_map[y:y+h, x:x+w]) < w * h * .1)):
                 static_objs.remove(static_objs[i-c])
                 c += 1
                 continue
