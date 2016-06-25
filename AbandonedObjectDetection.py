@@ -42,8 +42,7 @@ class AbandonedObjectDetection:
         self.th_sp = 20**2 # a th for number of static pixels
 
 
-    def get_abandoned_objs(self):
-        ret, frame = self.cap.read()
+    def get_abandoned_objs(self, frame):
         f2 = frame.copy()
 
         if self.clfg == self.longBackgroundInterval:
@@ -142,7 +141,7 @@ if __name__ == '__main__':
 
     while (1):
         _,frame = cap.read()
-        objs = aod.get_abandoned_objs()
+        objs = aod.get_abandoned_objs(frame)
 
         for obj in objs:
             x,y,w,h,_=obj
