@@ -126,3 +126,33 @@ class AbandonedObjectDetection:
                         self.static_objs[i-c][4] += 1
                 # cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
         return self.static_objs
+
+if __name__ == '__main__':
+    """
+    Run a demo.
+    """
+    import cv2
+
+    from AbandonedObjectDetection import *
+
+    cap = cv2.VideoCapture('2.mp4')
+    BG = cv2.imread('bg.jpg')
+
+    aod = AbandonedObjectDetection(cap, BG)
+
+    while (1):
+        _,frame = cap.read()
+        objs = aod.get_abandoned_objs()
+
+        for obj in objs:
+            x,y,w,h,_=obj
+            cv2.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
+
+        cv2.imshow("1",frame)
+        
+        key = cv2.waitKey(25) & 0xff
+        if key == 27:
+            break
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
