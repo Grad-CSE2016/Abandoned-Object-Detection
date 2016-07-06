@@ -6,7 +6,7 @@ class AbandonedObjectDetection:
 
     def __init__(self, cap, background, history=300, T=0.4, nMixtures=3,
         longBackgroundInterval=20, shortBackgroundINterval=1,
-        k=7, maxe=2000, thh=80):
+        k=7, maxe=2000, thh=800):
 
         self.cap = cap
         # background model
@@ -89,7 +89,7 @@ class AbandonedObjectDetection:
         if(np.count_nonzero(clean_map(self.static_obj_map, self.static_objs)) > self.th_sp ):
             if(self.slidewindowtime > 200):
                 #new_objs = extract_objs2(clean_map(static_obj_map, static_objs))
-                new_objs = extract_objs2(self.static_obj_map)
+                new_objs = extract_objs2(clean_map(self.static_obj_map, self.static_objs))
                 # if we get new object, first we make sure that they are not dublicated ones and then
                 # put the unique static objects in "static_objs" variable
                 if(new_objs):
